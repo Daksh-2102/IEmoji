@@ -904,6 +904,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // --- Copy SHA-256 Checksum ---
+  const copyHashBtn = document.getElementById("copyHashBtn");
+  const apkHashEl = document.getElementById("apkHash");
+  if (copyHashBtn && apkHashEl) {
+    copyHashBtn.addEventListener("click", () => {
+      const hashText = apkHashEl.textContent.trim();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(hashText);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = hashText;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      showToast("Checksum Copied! 📋", "SHA-256 hash copied to clipboard.");
+    });
+  }
+
   // --- Universal Download Buttons & Visual Progress Feedback ---
   const downloadTriggers = document.querySelectorAll(".btn-download-trigger");
   const progressContainer = document.getElementById("downloadProgressContainer");

@@ -897,31 +897,52 @@ document.addEventListener("DOMContentLoaded", () => {
     legalModal.querySelector(".modal-overlay").addEventListener("click", closeModal);
   }
 
-  // Handle escape key to close modal
+  // --- Changelog Modal Logic ---
+  const changelogModal = document.getElementById("changelogModal");
+  const changelogCloseBtn = document.getElementById("changelogCloseBtn");
+  const changelogBtnHero = document.getElementById("changelogBtnHero");
+  const changelogBtnMeta = document.getElementById("changelogBtnMeta");
+
+  function openChangelogModal() {
+    if (!changelogModal) return;
+    changelogModal.style.display = "flex";
+    changelogModal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeChangelogModal() {
+    if (!changelogModal) return;
+    changelogModal.style.display = "none";
+    changelogModal.classList.remove("active");
+    document.body.style.overflow = "auto";
+  }
+
+  if (changelogBtnHero) changelogBtnHero.addEventListener("click", openChangelogModal);
+  if (changelogBtnMeta) changelogBtnMeta.addEventListener("click", openChangelogModal);
+  if (changelogCloseBtn) changelogCloseBtn.addEventListener("click", closeChangelogModal);
+  if (changelogModal) {
+    changelogModal.querySelector(".modal-overlay").addEventListener("click", closeChangelogModal);
+  }
+
+  // Handle escape key for modals
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeModal();
+      closeChangelogModal();
     }
   });
 
-  // --- Copy SHA-256 Checksum ---
-  const copyHashBtn = document.getElementById("copyHashBtn");
-  const apkHashEl = document.getElementById("apkHash");
-  if (copyHashBtn && apkHashEl) {
-    copyHashBtn.addEventListener("click", () => {
-      const hashText = apkHashEl.textContent.trim();
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(hashText);
-      } else {
-        const ta = document.createElement("textarea");
-        ta.value = hashText;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-      }
-      showToast("Checksum Copied! 📋", "SHA-256 hash copied to clipboard.");
-    });
+  // --- Lightweight Privacy-Respecting Analytics Event Tracker ---
+  function trackDownloadEvent(btnElement) {
+    const btnLabel = btnElement ? (btnElement.id || btnElement.textContent.trim()) : 'unknown';
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({
+        path: 'download-apk-' + btnLabel,
+        title: 'APK Download Triggered: ' + btnLabel,
+        event: true
+      });
+    }
+    console.log('[Analytics] Privacy-preserving download CTA event logged:', btnLabel);
   }
 
   // --- Universal Download Buttons & Visual Progress Feedback ---
@@ -932,6 +953,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   downloadTriggers.forEach((btn) => {
     btn.addEventListener("click", (e) => {
+      // Log conversion event
+      trackDownloadEvent(btn);
+
       // Scroll smoothly to download section
       const downloadSec = document.getElementById("download");
       if (downloadSec && btn.id !== "mainDownloadBtn") {

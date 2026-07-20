@@ -108,6 +108,9 @@
     }
   }
   </script>
+
+  <!-- Lightweight Privacy-Respecting Analytics for Download CTA conversion tracking -->
+  <script data-goatcounter="https://iemoji.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 
@@ -163,7 +166,9 @@
         
         <!-- Left Hero Content -->
         <div class="hero-content">
-          <div class="badge-new">Version 2.4.1 out now</div>
+          <div class="badge-new">
+            Version 2.4.1 • Updated July 20, 2026 • <button id="changelogBtnHero" style="background:none; border:none; color:var(--primary); font-weight:600; text-decoration:underline; cursor:pointer; padding:0; font-size:inherit;">View Changelog</button>
+          </div>
           <h1 class="hero-title">Get iPhone Emojis on Android <span class="text-accent">for Free</span></h1>
           <p class="hero-description">
             Bring the premium iOS emoji set and the legendary clean typing interface to your Android phone. Instantly switch to elegant styling, smooth swipes, and secure, ad-free typing.
@@ -739,7 +744,7 @@
       <div class="section-container">
         <div class="section-header text-center">
           <span class="section-subtitle">Testimonials</span>
-          <h2 class="section-title">Loved by Millions of Users</h2>
+          <h2 class="section-title">Loved by Android Users</h2>
           <p class="section-description">See what Android enthusiasts are saying about their typing upgrade.</p>
         </div>
 
@@ -882,7 +887,9 @@
           <span>•</span>
           <span>Requires Android 8.0+</span>
           <span>•</span>
-          <span>Version: 2.4.1 (Stable)</span>
+          <span>Version: 2.4.1 (Updated July 20, 2026)</span>
+          <span>•</span>
+          <button id="changelogBtnMeta" style="background:none; border:none; color:var(--primary); font-weight:600; text-decoration:underline; cursor:pointer; padding:0; font-size:inherit;">View Changelog</button>
         </div>
 
         <!-- Verified Safe & Checksum Section -->
@@ -1000,6 +1007,46 @@
       <button class="modal-close" id="modalCloseBtn" aria-label="Close modal">&times;</button>
       <div class="modal-body" id="modalBodyText">
         <!-- Content injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Changelog Modal (Hidden by Default) -->
+  <div class="modal" id="changelogModal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <button class="modal-close" id="changelogCloseBtn" aria-label="Close changelog modal">&times;</button>
+      <div class="modal-body">
+        <h2>Changelog & Version History</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">iEmoji Keyboard for Android</p>
+        
+        <div style="border-left: 3px solid var(--primary); padding-left: 16px; margin-bottom: 24px;">
+          <h3 style="margin: 0 0 6px; color: var(--primary);">Version 2.4.1 (July 20, 2026)</h3>
+          <ul style="margin: 8px 0 0 16px; font-size: 0.95rem; line-height: 1.6; list-style-type: disc;">
+            <li>Added interactive web-based Emoji Copy & Paste library module.</li>
+            <li>Added VirusTotal security audit verification and displayed SHA-256 build checksum.</li>
+            <li>Added accessibility improvements (WCAG AA compliance) and enhanced dark mode contrast.</li>
+            <li>Updated OpenGraph metadata and SoftwareApplication JSON-LD structured data.</li>
+            <li>Added privacy-respecting conversion tracking for APK downloads.</li>
+          </ul>
+        </div>
+
+        <div style="border-left: 3px solid var(--border-light); padding-left: 16px; margin-bottom: 24px;">
+          <h3 style="margin: 0 0 6px; color: var(--text-dark);">Version 2.4.0 (June 2026)</h3>
+          <ul style="margin: 8px 0 0 16px; font-size: 0.95rem; line-height: 1.6; list-style-type: disc;">
+            <li>Added custom background skin uploads and custom sound profiles.</li>
+            <li>Optimized IME memory consumption down to 620 KB footprint.</li>
+            <li>Improved autocorrect speed and predictive candidate dictionary.</li>
+          </ul>
+        </div>
+
+        <div style="border-left: 3px solid var(--border-light); padding-left: 16px;">
+          <h3 style="margin: 0 0 6px; color: var(--text-dark);">Version 2.3.0 (May 2026)</h3>
+          <ul style="margin: 8px 0 0 16px; font-size: 0.95rem; line-height: 1.6; list-style-type: disc;">
+            <li>Full support for system-wide dark mode and OLED battery saver.</li>
+            <li>Added gesture swipe typing engine and custom key press vibrations.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

@@ -109,7 +109,7 @@
       </nav>
 
       <div class="nav-cta">
-        <a href="#download" class="btn btn-nav">Download APK</a>
+        <a href="./iemoji-keyboard.apk" download="iemoji-keyboard.apk" class="btn btn-nav btn-download-trigger">Download APK</a>
       </div>
 
       <button class="theme-toggle-btn" id="siteThemeToggle" aria-label="Toggle Dark Mode" style="font-size: 1.25rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: 36px; height: 36px; margin-right: 12px; border: 1px solid var(--border-light); background-color: var(--bg-light); cursor: pointer; transition: transform var(--transition-fast);">🌙</button>
@@ -139,7 +139,7 @@
           </p>
           
           <div class="hero-cta-group">
-            <a href="#download" class="btn btn-primary">
+            <a href="./iemoji-keyboard.apk" download="iemoji-keyboard.apk" class="btn btn-primary btn-download-trigger">
               <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 3V16M12 16L7 11M12 16L17 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M4 19H20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -747,7 +747,7 @@
         <p class="download-subtitle">Download the lightweight, completely free, and secure APK file instantly.</p>
         
         <div class="download-buttons">
-          <a href="./iemoji-keyboard.apk" download="iemoji-keyboard.apk" class="btn btn-download-primary" id="mainDownloadBtn">
+          <a href="./iemoji-keyboard.apk" download="iemoji-keyboard.apk" class="btn btn-download-primary btn-download-trigger" id="mainDownloadBtn">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M12 3V16M12 16L7 11M12 16L7 11" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M4 19H20" stroke-linecap="round"/>
@@ -770,6 +770,31 @@
             <div class="progress-bar-fill" id="downloadProgressBar"></div>
           </div>
           <span class="progress-label" id="downloadProgressLabel">Downloading: 0%</span>
+        </div>
+
+        <!-- How to Install Steps on Mobile -->
+        <div class="install-steps-grid">
+          <div class="install-step-item">
+            <div class="install-step-num">1</div>
+            <div class="install-step-text">
+              <strong>1. Download APK</strong>
+              Tap the download button above to save the .apk file on your Android device.
+            </div>
+          </div>
+          <div class="install-step-item">
+            <div class="install-step-num">2</div>
+            <div class="install-step-text">
+              <strong>2. Allow Unknown Sources</strong>
+              If prompted by your browser, tap Settings and toggle on "Allow from this source".
+            </div>
+          </div>
+          <div class="install-step-item">
+            <div class="install-step-num">3</div>
+            <div class="install-step-text">
+              <strong>3. Install & Enable</strong>
+              Open the downloaded file, tap Install, then select iEmoji Keyboard as your active input method.
+            </div>
+          </div>
         </div>
       </div>
     </section>

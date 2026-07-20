@@ -891,6 +891,57 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // --- Universal Download Buttons & Visual Progress Feedback ---
+  const downloadTriggers = document.querySelectorAll(".btn-download-trigger");
+  const progressContainer = document.getElementById("downloadProgressContainer");
+  const progressBar = document.getElementById("downloadProgressBar");
+  const progressLabel = document.getElementById("downloadProgressLabel");
+
+  downloadTriggers.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      // Scroll smoothly to download section
+      const downloadSec = document.getElementById("download");
+      if (downloadSec && btn.id !== "mainDownloadBtn") {
+        downloadSec.scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Show progress bar
+      if (progressContainer && progressBar && progressLabel) {
+        progressContainer.style.display = "block";
+        let progress = 0;
+        progressBar.style.width = "0%";
+        progressLabel.textContent = "Initiating APK Download: 0%";
+        progressLabel.style.color = "var(--primary)";
+
+        const interval = setInterval(() => {
+          progress += Math.floor(Math.random() * 18) + 14;
+          if (progress >= 100) {
+            progress = 100;
+            progressBar.style.width = "100%";
+            progressLabel.textContent = "✓ APK Download Started! Check your downloads manager.";
+            progressLabel.style.color = "#34c759";
+            clearInterval(interval);
+          } else {
+            progressBar.style.width = progress + "%";
+            progressLabel.textContent = `Downloading iEmoji APK: ${progress}%`;
+          }
+        }, 100);
+      }
+
+      // Programmatic direct download trigger for mobile browsers
+      try {
+        const link = document.createElement("a");
+        link.href = "./iemoji-keyboard.apk";
+        link.download = "iemoji-keyboard.apk";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        console.log("Direct link click initiated", err);
+      }
+    });
+  });
+
 
   // --- Site-wide Dark Mode Toggle ---
   const siteThemeToggle = document.getElementById("siteThemeToggle");

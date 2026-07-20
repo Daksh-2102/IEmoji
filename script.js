@@ -1039,6 +1039,23 @@ document.addEventListener("DOMContentLoaded", () => {
       const isDark = document.body.classList.contains("dark-theme");
       siteThemeToggle.textContent = isDark ? "☀️" : "🌙";
       localStorage.setItem("siteTheme", isDark ? "dark" : "light");
+  }
+
+  // --- Copy SHA-256 Checksum Listener ---
+  const copyHashBtn = document.getElementById("copyHashBtn");
+  const apkHash = document.getElementById("apkHash");
+  if (copyHashBtn && apkHash) {
+    copyHashBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(apkHash.textContent.trim()).then(() => {
+        copyHashBtn.style.color = "var(--primary)";
+        copyHashBtn.title = "Copied!";
+        setTimeout(() => {
+          copyHashBtn.style.color = "";
+          copyHashBtn.title = "Copy Checksum";
+        }, 2000);
+      }).catch(err => {
+        console.error("Clipboard copy failed:", err);
+      });
     });
   }
 

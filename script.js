@@ -959,10 +959,35 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Site-wide Dark Mode Toggle ---
   const siteThemeToggle = document.getElementById("siteThemeToggle");
   if (siteThemeToggle) {
-    // Check saved theme
-    if (localStorage.getItem("siteTheme") === "dark") {
+    const savedTheme = localStorage.getItem("siteTheme");
+    
+    if (savedTheme === "dark") {
       document.body.classList.add("dark-theme");
       siteThemeToggle.textContent = "☀️";
+    } else if (savedTheme === "light") {
+      document.body.classList.remove("dark-theme");
+      siteThemeToggle.textContent = "🌙";
+    } else {
+      // No saved preference — auto-detect from OS
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add("dark-theme");
+        siteThemeToggle.textContent = "☀️";
+      }
+    }
+    
+    // Live listener: follow OS changes unless user has manually set a preference
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem("siteTheme")) {
+          if (e.matches) {
+            document.body.classList.add("dark-theme");
+            siteThemeToggle.textContent = "☀️";
+          } else {
+            document.body.classList.remove("dark-theme");
+            siteThemeToggle.textContent = "🌙";
+          }
+        }
+      });
     }
     
     siteThemeToggle.addEventListener("click", () => {
@@ -1135,5 +1160,736 @@ document.addEventListener("DOMContentLoaded", () => {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }, 1200);
   }
+
+
+  // ==========================================================================
+  // Emoji Copy-Paste Picker — Full Feature Module
+  // ==========================================================================
+
+  const EP_EMOJI_DATA = [
+    // --- Smileys & People ---
+    { e: '😀', name: 'grinning face', shortcode: ':grinning:', cat: 'smileys', skin: false },
+    { e: '😃', name: 'grinning face with big eyes', shortcode: ':smiley:', cat: 'smileys', skin: false },
+    { e: '😄', name: 'grinning face with smiling eyes', shortcode: ':smile:', cat: 'smileys', skin: false },
+    { e: '😁', name: 'beaming face with smiling eyes', shortcode: ':grin:', cat: 'smileys', skin: false },
+    { e: '😂', name: 'face with tears of joy', shortcode: ':joy:', cat: 'smileys', skin: false },
+    { e: '🤣', name: 'rolling on the floor laughing', shortcode: ':rofl:', cat: 'smileys', skin: false },
+    { e: '😊', name: 'smiling face with smiling eyes', shortcode: ':blush:', cat: 'smileys', skin: false },
+    { e: '😇', name: 'smiling face with halo', shortcode: ':innocent:', cat: 'smileys', skin: false },
+    { e: '🙂', name: 'slightly smiling face', shortcode: ':slight_smile:', cat: 'smileys', skin: false },
+    { e: '🙃', name: 'upside down face', shortcode: ':upside_down:', cat: 'smileys', skin: false },
+    { e: '😉', name: 'winking face', shortcode: ':wink:', cat: 'smileys', skin: false },
+    { e: '😌', name: 'relieved face', shortcode: ':relieved:', cat: 'smileys', skin: false },
+    { e: '😍', name: 'smiling face with heart eyes', shortcode: ':heart_eyes:', cat: 'smileys', skin: false },
+    { e: '🥰', name: 'smiling face with hearts', shortcode: ':smiling_face_with_hearts:', cat: 'smileys', skin: false },
+    { e: '😘', name: 'face blowing a kiss', shortcode: ':kissing_heart:', cat: 'smileys', skin: false },
+    { e: '😗', name: 'kissing face', shortcode: ':kissing:', cat: 'smileys', skin: false },
+    { e: '😙', name: 'kissing face with smiling eyes', shortcode: ':kissing_smiling_eyes:', cat: 'smileys', skin: false },
+    { e: '😚', name: 'kissing face with closed eyes', shortcode: ':kissing_closed_eyes:', cat: 'smileys', skin: false },
+    { e: '😋', name: 'face savoring food', shortcode: ':yum:', cat: 'smileys', skin: false },
+    { e: '😛', name: 'face with tongue', shortcode: ':stuck_out_tongue:', cat: 'smileys', skin: false },
+    { e: '😜', name: 'winking face with tongue', shortcode: ':stuck_out_tongue_winking_eye:', cat: 'smileys', skin: false },
+    { e: '🤪', name: 'zany face', shortcode: ':zany_face:', cat: 'smileys', skin: false },
+    { e: '😝', name: 'squinting face with tongue', shortcode: ':stuck_out_tongue_closed_eyes:', cat: 'smileys', skin: false },
+    { e: '🤑', name: 'money mouth face', shortcode: ':money_mouth:', cat: 'smileys', skin: false },
+    { e: '🤗', name: 'hugging face', shortcode: ':hugs:', cat: 'smileys', skin: false },
+    { e: '🤔', name: 'thinking face', shortcode: ':thinking:', cat: 'smileys', skin: false },
+    { e: '🤐', name: 'zipper mouth face', shortcode: ':zipper_mouth:', cat: 'smileys', skin: false },
+    { e: '🤨', name: 'face with raised eyebrow', shortcode: ':raised_eyebrow:', cat: 'smileys', skin: false },
+    { e: '😐', name: 'neutral face', shortcode: ':neutral_face:', cat: 'smileys', skin: false },
+    { e: '😑', name: 'expressionless face', shortcode: ':expressionless:', cat: 'smileys', skin: false },
+    { e: '😶', name: 'face without mouth', shortcode: ':no_mouth:', cat: 'smileys', skin: false },
+    { e: '😏', name: 'smirking face', shortcode: ':smirk:', cat: 'smileys', skin: false },
+    { e: '😒', name: 'unamused face', shortcode: ':unamused:', cat: 'smileys', skin: false },
+    { e: '🙄', name: 'face with rolling eyes', shortcode: ':roll_eyes:', cat: 'smileys', skin: false },
+    { e: '😬', name: 'grimacing face', shortcode: ':grimacing:', cat: 'smileys', skin: false },
+    { e: '🤥', name: 'lying face', shortcode: ':lying_face:', cat: 'smileys', skin: false },
+    { e: '😌', name: 'relieved face', shortcode: ':relieved:', cat: 'smileys', skin: false },
+    { e: '😔', name: 'pensive face', shortcode: ':pensive:', cat: 'smileys', skin: false },
+    { e: '😪', name: 'sleepy face', shortcode: ':sleepy:', cat: 'smileys', skin: false },
+    { e: '🤤', name: 'drooling face', shortcode: ':drooling_face:', cat: 'smileys', skin: false },
+    { e: '😴', name: 'sleeping face', shortcode: ':sleeping:', cat: 'smileys', skin: false },
+    { e: '😷', name: 'face with medical mask', shortcode: ':mask:', cat: 'smileys', skin: false },
+    { e: '🤒', name: 'face with thermometer', shortcode: ':thermometer_face:', cat: 'smileys', skin: false },
+    { e: '🤕', name: 'face with head bandage', shortcode: ':head_bandage:', cat: 'smileys', skin: false },
+    { e: '🤢', name: 'nauseated face', shortcode: ':nauseated:', cat: 'smileys', skin: false },
+    { e: '🤮', name: 'face vomiting', shortcode: ':vomiting:', cat: 'smileys', skin: false },
+    { e: '🥵', name: 'hot face', shortcode: ':hot_face:', cat: 'smileys', skin: false },
+    { e: '🥶', name: 'cold face', shortcode: ':cold_face:', cat: 'smileys', skin: false },
+    { e: '🥴', name: 'woozy face', shortcode: ':woozy_face:', cat: 'smileys', skin: false },
+    { e: '😵', name: 'face with crossed-out eyes', shortcode: ':dizzy_face:', cat: 'smileys', skin: false },
+    { e: '🤯', name: 'exploding head', shortcode: ':exploding_head:', cat: 'smileys', skin: false },
+    { e: '😎', name: 'smiling face with sunglasses', shortcode: ':sunglasses:', cat: 'smileys', skin: false },
+    { e: '🥳', name: 'partying face', shortcode: ':partying:', cat: 'smileys', skin: false },
+    { e: '🤩', name: 'star struck', shortcode: ':star_struck:', cat: 'smileys', skin: false },
+    { e: '😕', name: 'confused face', shortcode: ':confused:', cat: 'smileys', skin: false },
+    { e: '😟', name: 'worried face', shortcode: ':worried:', cat: 'smileys', skin: false },
+    { e: '🙁', name: 'slightly frowning face', shortcode: ':slight_frown:', cat: 'smileys', skin: false },
+    { e: '😮', name: 'face with open mouth', shortcode: ':open_mouth:', cat: 'smileys', skin: false },
+    { e: '😯', name: 'hushed face', shortcode: ':hushed:', cat: 'smileys', skin: false },
+    { e: '😲', name: 'astonished face', shortcode: ':astonished:', cat: 'smileys', skin: false },
+    { e: '😳', name: 'flushed face', shortcode: ':flushed:', cat: 'smileys', skin: false },
+    { e: '🥺', name: 'pleading face', shortcode: ':pleading:', cat: 'smileys', skin: false },
+    { e: '😦', name: 'frowning face with open mouth', shortcode: ':frowning:', cat: 'smileys', skin: false },
+    { e: '😧', name: 'anguished face', shortcode: ':anguished:', cat: 'smileys', skin: false },
+    { e: '😨', name: 'fearful face', shortcode: ':fearful:', cat: 'smileys', skin: false },
+    { e: '😰', name: 'anxious face with sweat', shortcode: ':cold_sweat:', cat: 'smileys', skin: false },
+    { e: '😥', name: 'sad but relieved face', shortcode: ':disappointed_relieved:', cat: 'smileys', skin: false },
+    { e: '😢', name: 'crying face', shortcode: ':cry:', cat: 'smileys', skin: false },
+    { e: '😭', name: 'loudly crying face', shortcode: ':sob:', cat: 'smileys', skin: false },
+    { e: '😱', name: 'face screaming in fear', shortcode: ':scream:', cat: 'smileys', skin: false },
+    { e: '😖', name: 'confounded face', shortcode: ':confounded:', cat: 'smileys', skin: false },
+    { e: '😣', name: 'persevering face', shortcode: ':persevere:', cat: 'smileys', skin: false },
+    { e: '😞', name: 'disappointed face', shortcode: ':disappointed:', cat: 'smileys', skin: false },
+    { e: '😓', name: 'downcast face with sweat', shortcode: ':sweat:', cat: 'smileys', skin: false },
+    { e: '😩', name: 'weary face', shortcode: ':weary:', cat: 'smileys', skin: false },
+    { e: '😫', name: 'tired face', shortcode: ':tired_face:', cat: 'smileys', skin: false },
+    { e: '🥱', name: 'yawning face', shortcode: ':yawning:', cat: 'smileys', skin: false },
+    { e: '😤', name: 'face with steam from nose', shortcode: ':triumph:', cat: 'smileys', skin: false },
+    { e: '😡', name: 'pouting face', shortcode: ':rage:', cat: 'smileys', skin: false },
+    { e: '😠', name: 'angry face', shortcode: ':angry:', cat: 'smileys', skin: false },
+    { e: '🤬', name: 'face with symbols on mouth', shortcode: ':cursing:', cat: 'smileys', skin: false },
+    { e: '💀', name: 'skull', shortcode: ':skull:', cat: 'smileys', skin: false },
+    { e: '☠️', name: 'skull and crossbones', shortcode: ':skull_crossbones:', cat: 'smileys', skin: false },
+    { e: '💩', name: 'pile of poo', shortcode: ':poop:', cat: 'smileys', skin: false },
+    { e: '🤡', name: 'clown face', shortcode: ':clown:', cat: 'smileys', skin: false },
+    { e: '👻', name: 'ghost', shortcode: ':ghost:', cat: 'smileys', skin: false },
+    { e: '👽', name: 'alien', shortcode: ':alien:', cat: 'smileys', skin: false },
+    { e: '🤖', name: 'robot', shortcode: ':robot:', cat: 'smileys', skin: false },
+    { e: '😺', name: 'grinning cat', shortcode: ':smiley_cat:', cat: 'smileys', skin: false },
+    { e: '😸', name: 'grinning cat with smiling eyes', shortcode: ':smile_cat:', cat: 'smileys', skin: false },
+    { e: '😹', name: 'cat with tears of joy', shortcode: ':joy_cat:', cat: 'smileys', skin: false },
+    { e: '😻', name: 'smiling cat with heart eyes', shortcode: ':heart_eyes_cat:', cat: 'smileys', skin: false },
+    { e: '🙈', name: 'see no evil monkey', shortcode: ':see_no_evil:', cat: 'smileys', skin: false },
+    { e: '🙉', name: 'hear no evil monkey', shortcode: ':hear_no_evil:', cat: 'smileys', skin: false },
+    { e: '🙊', name: 'speak no evil monkey', shortcode: ':speak_no_evil:', cat: 'smileys', skin: false },
+    // Hands & Gestures (with skin tones)
+    { e: '👍', name: 'thumbs up', shortcode: ':thumbsup:', cat: 'smileys', skin: true },
+    { e: '👎', name: 'thumbs down', shortcode: ':thumbsdown:', cat: 'smileys', skin: true },
+    { e: '👏', name: 'clapping hands', shortcode: ':clap:', cat: 'smileys', skin: true },
+    { e: '🙌', name: 'raising hands', shortcode: ':raised_hands:', cat: 'smileys', skin: true },
+    { e: '🤝', name: 'handshake', shortcode: ':handshake:', cat: 'smileys', skin: false },
+    { e: '🙏', name: 'folded hands', shortcode: ':pray:', cat: 'smileys', skin: true },
+    { e: '✌️', name: 'victory hand', shortcode: ':v:', cat: 'smileys', skin: true },
+    { e: '🤞', name: 'crossed fingers', shortcode: ':crossed_fingers:', cat: 'smileys', skin: true },
+    { e: '🤟', name: 'love you gesture', shortcode: ':love_you_gesture:', cat: 'smileys', skin: true },
+    { e: '🤘', name: 'sign of the horns', shortcode: ':metal:', cat: 'smileys', skin: true },
+    { e: '👌', name: 'ok hand', shortcode: ':ok_hand:', cat: 'smileys', skin: true },
+    { e: '🤏', name: 'pinching hand', shortcode: ':pinching_hand:', cat: 'smileys', skin: true },
+    { e: '👋', name: 'waving hand', shortcode: ':wave:', cat: 'smileys', skin: true },
+    { e: '🤚', name: 'raised back of hand', shortcode: ':raised_back_of_hand:', cat: 'smileys', skin: true },
+    { e: '✋', name: 'raised hand', shortcode: ':raised_hand:', cat: 'smileys', skin: true },
+    { e: '🖐️', name: 'hand with fingers splayed', shortcode: ':hand_splayed:', cat: 'smileys', skin: true },
+    { e: '🖖', name: 'vulcan salute', shortcode: ':vulcan:', cat: 'smileys', skin: true },
+    { e: '👈', name: 'backhand index pointing left', shortcode: ':point_left:', cat: 'smileys', skin: true },
+    { e: '👉', name: 'backhand index pointing right', shortcode: ':point_right:', cat: 'smileys', skin: true },
+    { e: '👆', name: 'backhand index pointing up', shortcode: ':point_up_2:', cat: 'smileys', skin: true },
+    { e: '👇', name: 'backhand index pointing down', shortcode: ':point_down:', cat: 'smileys', skin: true },
+    { e: '☝️', name: 'index pointing up', shortcode: ':point_up:', cat: 'smileys', skin: true },
+    { e: '✊', name: 'raised fist', shortcode: ':fist:', cat: 'smileys', skin: true },
+    { e: '👊', name: 'oncoming fist', shortcode: ':punch:', cat: 'smileys', skin: true },
+    { e: '🤛', name: 'left facing fist', shortcode: ':left_fist:', cat: 'smileys', skin: true },
+    { e: '🤜', name: 'right facing fist', shortcode: ':right_fist:', cat: 'smileys', skin: true },
+    { e: '💪', name: 'flexed biceps', shortcode: ':muscle:', cat: 'smileys', skin: true },
+    // Hearts & Symbols in Smileys
+    { e: '❤️', name: 'red heart', shortcode: ':heart:', cat: 'smileys', skin: false },
+    { e: '🧡', name: 'orange heart', shortcode: ':orange_heart:', cat: 'smileys', skin: false },
+    { e: '💛', name: 'yellow heart', shortcode: ':yellow_heart:', cat: 'smileys', skin: false },
+    { e: '💚', name: 'green heart', shortcode: ':green_heart:', cat: 'smileys', skin: false },
+    { e: '💙', name: 'blue heart', shortcode: ':blue_heart:', cat: 'smileys', skin: false },
+    { e: '💜', name: 'purple heart', shortcode: ':purple_heart:', cat: 'smileys', skin: false },
+    { e: '🖤', name: 'black heart', shortcode: ':black_heart:', cat: 'smileys', skin: false },
+    { e: '🤍', name: 'white heart', shortcode: ':white_heart:', cat: 'smileys', skin: false },
+    { e: '🤎', name: 'brown heart', shortcode: ':brown_heart:', cat: 'smileys', skin: false },
+    { e: '💔', name: 'broken heart', shortcode: ':broken_heart:', cat: 'smileys', skin: false },
+    { e: '❣️', name: 'heart exclamation', shortcode: ':heart_exclamation:', cat: 'smileys', skin: false },
+    { e: '💕', name: 'two hearts', shortcode: ':two_hearts:', cat: 'smileys', skin: false },
+    { e: '💞', name: 'revolving hearts', shortcode: ':revolving_hearts:', cat: 'smileys', skin: false },
+    { e: '💓', name: 'beating heart', shortcode: ':heartbeat:', cat: 'smileys', skin: false },
+    { e: '💗', name: 'growing heart', shortcode: ':heartpulse:', cat: 'smileys', skin: false },
+    { e: '💖', name: 'sparkling heart', shortcode: ':sparkling_heart:', cat: 'smileys', skin: false },
+    { e: '💘', name: 'heart with arrow', shortcode: ':cupid:', cat: 'smileys', skin: false },
+    { e: '💝', name: 'heart with ribbon', shortcode: ':gift_heart:', cat: 'smileys', skin: false },
+    { e: '🔥', name: 'fire', shortcode: ':fire:', cat: 'smileys', skin: false },
+    { e: '✨', name: 'sparkles', shortcode: ':sparkles:', cat: 'smileys', skin: false },
+    { e: '🌟', name: 'glowing star', shortcode: ':star2:', cat: 'smileys', skin: false },
+    { e: '💯', name: 'hundred points', shortcode: ':100:', cat: 'smileys', skin: false },
+    { e: '💥', name: 'collision', shortcode: ':boom:', cat: 'smileys', skin: false },
+    { e: '👀', name: 'eyes', shortcode: ':eyes:', cat: 'smileys', skin: false },
+    { e: '👑', name: 'crown', shortcode: ':crown:', cat: 'smileys', skin: false },
+    { e: '🎉', name: 'party popper', shortcode: ':tada:', cat: 'smileys', skin: false },
+    { e: '🎈', name: 'balloon', shortcode: ':balloon:', cat: 'smileys', skin: false },
+    { e: '🎁', name: 'wrapped gift', shortcode: ':gift:', cat: 'smileys', skin: false },
+    { e: '🎂', name: 'birthday cake', shortcode: ':birthday:', cat: 'smileys', skin: false },
+    // --- Animals & Nature ---
+    { e: '🐶', name: 'dog face', shortcode: ':dog:', cat: 'animals', skin: false },
+    { e: '🐱', name: 'cat face', shortcode: ':cat:', cat: 'animals', skin: false },
+    { e: '🐭', name: 'mouse face', shortcode: ':mouse:', cat: 'animals', skin: false },
+    { e: '🐹', name: 'hamster', shortcode: ':hamster:', cat: 'animals', skin: false },
+    { e: '🐰', name: 'rabbit face', shortcode: ':rabbit:', cat: 'animals', skin: false },
+    { e: '🦊', name: 'fox', shortcode: ':fox:', cat: 'animals', skin: false },
+    { e: '🐻', name: 'bear', shortcode: ':bear:', cat: 'animals', skin: false },
+    { e: '🐼', name: 'panda', shortcode: ':panda:', cat: 'animals', skin: false },
+    { e: '🐨', name: 'koala', shortcode: ':koala:', cat: 'animals', skin: false },
+    { e: '🐯', name: 'tiger face', shortcode: ':tiger:', cat: 'animals', skin: false },
+    { e: '🦁', name: 'lion', shortcode: ':lion:', cat: 'animals', skin: false },
+    { e: '🐮', name: 'cow face', shortcode: ':cow:', cat: 'animals', skin: false },
+    { e: '🐷', name: 'pig face', shortcode: ':pig:', cat: 'animals', skin: false },
+    { e: '🐸', name: 'frog', shortcode: ':frog:', cat: 'animals', skin: false },
+    { e: '🐵', name: 'monkey face', shortcode: ':monkey_face:', cat: 'animals', skin: false },
+    { e: '🐝', name: 'honeybee', shortcode: ':bee:', cat: 'animals', skin: false },
+    { e: '🐛', name: 'bug', shortcode: ':bug:', cat: 'animals', skin: false },
+    { e: '🦋', name: 'butterfly', shortcode: ':butterfly:', cat: 'animals', skin: false },
+    { e: '🐞', name: 'lady beetle', shortcode: ':ladybug:', cat: 'animals', skin: false },
+    { e: '🐜', name: 'ant', shortcode: ':ant:', cat: 'animals', skin: false },
+    { e: '🐢', name: 'turtle', shortcode: ':turtle:', cat: 'animals', skin: false },
+    { e: '🐍', name: 'snake', shortcode: ':snake:', cat: 'animals', skin: false },
+    { e: '🐙', name: 'octopus', shortcode: ':octopus:', cat: 'animals', skin: false },
+    { e: '🦑', name: 'squid', shortcode: ':squid:', cat: 'animals', skin: false },
+    { e: '🦞', name: 'lobster', shortcode: ':lobster:', cat: 'animals', skin: false },
+    { e: '🦀', name: 'crab', shortcode: ':crab:', cat: 'animals', skin: false },
+    { e: '🐡', name: 'blowfish', shortcode: ':blowfish:', cat: 'animals', skin: false },
+    { e: '🐠', name: 'tropical fish', shortcode: ':tropical_fish:', cat: 'animals', skin: false },
+    { e: '🐟', name: 'fish', shortcode: ':fish:', cat: 'animals', skin: false },
+    { e: '🐬', name: 'dolphin', shortcode: ':dolphin:', cat: 'animals', skin: false },
+    { e: '🐳', name: 'spouting whale', shortcode: ':whale:', cat: 'animals', skin: false },
+    { e: '🐋', name: 'whale', shortcode: ':whale2:', cat: 'animals', skin: false },
+    { e: '🦈', name: 'shark', shortcode: ':shark:', cat: 'animals', skin: false },
+    { e: '🐊', name: 'crocodile', shortcode: ':crocodile:', cat: 'animals', skin: false },
+    { e: '🐅', name: 'tiger', shortcode: ':tiger2:', cat: 'animals', skin: false },
+    { e: '🐆', name: 'leopard', shortcode: ':leopard:', cat: 'animals', skin: false },
+    { e: '🦓', name: 'zebra', shortcode: ':zebra:', cat: 'animals', skin: false },
+    { e: '🦍', name: 'gorilla', shortcode: ':gorilla:', cat: 'animals', skin: false },
+    { e: '🐘', name: 'elephant', shortcode: ':elephant:', cat: 'animals', skin: false },
+    { e: '🦏', name: 'rhinoceros', shortcode: ':rhino:', cat: 'animals', skin: false },
+    { e: '🐪', name: 'camel', shortcode: ':camel:', cat: 'animals', skin: false },
+    { e: '🦒', name: 'giraffe', shortcode: ':giraffe:', cat: 'animals', skin: false },
+    { e: '🐄', name: 'cow', shortcode: ':cow2:', cat: 'animals', skin: false },
+    { e: '🐎', name: 'horse', shortcode: ':horse:', cat: 'animals', skin: false },
+    { e: '🦌', name: 'deer', shortcode: ':deer:', cat: 'animals', skin: false },
+    { e: '🐕', name: 'dog', shortcode: ':dog2:', cat: 'animals', skin: false },
+    { e: '🐈', name: 'cat', shortcode: ':cat2:', cat: 'animals', skin: false },
+    { e: '🐇', name: 'rabbit', shortcode: ':rabbit2:', cat: 'animals', skin: false },
+    { e: '🐾', name: 'paw prints', shortcode: ':paw_prints:', cat: 'animals', skin: false },
+    { e: '🐉', name: 'dragon', shortcode: ':dragon:', cat: 'animals', skin: false },
+    { e: '🌵', name: 'cactus', shortcode: ':cactus:', cat: 'animals', skin: false },
+    { e: '🎄', name: 'christmas tree', shortcode: ':christmas_tree:', cat: 'animals', skin: false },
+    { e: '🌲', name: 'evergreen tree', shortcode: ':evergreen_tree:', cat: 'animals', skin: false },
+    { e: '🌳', name: 'deciduous tree', shortcode: ':deciduous_tree:', cat: 'animals', skin: false },
+    { e: '🌴', name: 'palm tree', shortcode: ':palm_tree:', cat: 'animals', skin: false },
+    { e: '🌱', name: 'seedling', shortcode: ':seedling:', cat: 'animals', skin: false },
+    { e: '🌿', name: 'herb', shortcode: ':herb:', cat: 'animals', skin: false },
+    { e: '🍀', name: 'four leaf clover', shortcode: ':four_leaf_clover:', cat: 'animals', skin: false },
+    { e: '🌹', name: 'rose', shortcode: ':rose:', cat: 'animals', skin: false },
+    { e: '🌸', name: 'cherry blossom', shortcode: ':cherry_blossom:', cat: 'animals', skin: false },
+    { e: '🌻', name: 'sunflower', shortcode: ':sunflower:', cat: 'animals', skin: false },
+    { e: '🌈', name: 'rainbow', shortcode: ':rainbow:', cat: 'animals', skin: false },
+    { e: '☀️', name: 'sun', shortcode: ':sunny:', cat: 'animals', skin: false },
+    { e: '🌙', name: 'crescent moon', shortcode: ':crescent_moon:', cat: 'animals', skin: false },
+    { e: '⭐', name: 'star', shortcode: ':star:', cat: 'animals', skin: false },
+    { e: '⚡', name: 'high voltage', shortcode: ':zap:', cat: 'animals', skin: false },
+    { e: '🌊', name: 'water wave', shortcode: ':ocean:', cat: 'animals', skin: false },
+    // --- Food & Drink ---
+    { e: '🍏', name: 'green apple', shortcode: ':green_apple:', cat: 'food', skin: false },
+    { e: '🍎', name: 'red apple', shortcode: ':apple:', cat: 'food', skin: false },
+    { e: '🍌', name: 'banana', shortcode: ':banana:', cat: 'food', skin: false },
+    { e: '🍉', name: 'watermelon', shortcode: ':watermelon:', cat: 'food', skin: false },
+    { e: '🍇', name: 'grapes', shortcode: ':grapes:', cat: 'food', skin: false },
+    { e: '🍓', name: 'strawberry', shortcode: ':strawberry:', cat: 'food', skin: false },
+    { e: '🍒', name: 'cherries', shortcode: ':cherries:', cat: 'food', skin: false },
+    { e: '🍍', name: 'pineapple', shortcode: ':pineapple:', cat: 'food', skin: false },
+    { e: '🥥', name: 'coconut', shortcode: ':coconut:', cat: 'food', skin: false },
+    { e: '🥝', name: 'kiwi fruit', shortcode: ':kiwi:', cat: 'food', skin: false },
+    { e: '🍅', name: 'tomato', shortcode: ':tomato:', cat: 'food', skin: false },
+    { e: '🍆', name: 'eggplant', shortcode: ':eggplant:', cat: 'food', skin: false },
+    { e: '🥑', name: 'avocado', shortcode: ':avocado:', cat: 'food', skin: false },
+    { e: '🥦', name: 'broccoli', shortcode: ':broccoli:', cat: 'food', skin: false },
+    { e: '🌶️', name: 'hot pepper', shortcode: ':hot_pepper:', cat: 'food', skin: false },
+    { e: '🌽', name: 'ear of corn', shortcode: ':corn:', cat: 'food', skin: false },
+    { e: '🥕', name: 'carrot', shortcode: ':carrot:', cat: 'food', skin: false },
+    { e: '🥐', name: 'croissant', shortcode: ':croissant:', cat: 'food', skin: false },
+    { e: '🍞', name: 'bread', shortcode: ':bread:', cat: 'food', skin: false },
+    { e: '🧀', name: 'cheese wedge', shortcode: ':cheese:', cat: 'food', skin: false },
+    { e: '🍳', name: 'cooking', shortcode: ':cooking:', cat: 'food', skin: false },
+    { e: '🥩', name: 'cut of meat', shortcode: ':cut_of_meat:', cat: 'food', skin: false },
+    { e: '🍗', name: 'poultry leg', shortcode: ':poultry_leg:', cat: 'food', skin: false },
+    { e: '🍖', name: 'meat on bone', shortcode: ':meat_on_bone:', cat: 'food', skin: false },
+    { e: '🌭', name: 'hot dog', shortcode: ':hotdog:', cat: 'food', skin: false },
+    { e: '🍔', name: 'hamburger', shortcode: ':hamburger:', cat: 'food', skin: false },
+    { e: '🍟', name: 'french fries', shortcode: ':fries:', cat: 'food', skin: false },
+    { e: '🍕', name: 'pizza', shortcode: ':pizza:', cat: 'food', skin: false },
+    { e: '🥪', name: 'sandwich', shortcode: ':sandwich:', cat: 'food', skin: false },
+    { e: '🌮', name: 'taco', shortcode: ':taco:', cat: 'food', skin: false },
+    { e: '🌯', name: 'burrito', shortcode: ':burrito:', cat: 'food', skin: false },
+    { e: '🥗', name: 'green salad', shortcode: ':salad:', cat: 'food', skin: false },
+    { e: '🍲', name: 'pot of food', shortcode: ':stew:', cat: 'food', skin: false },
+    { e: '🍦', name: 'soft ice cream', shortcode: ':icecream:', cat: 'food', skin: false },
+    { e: '🍩', name: 'doughnut', shortcode: ':doughnut:', cat: 'food', skin: false },
+    { e: '🍪', name: 'cookie', shortcode: ':cookie:', cat: 'food', skin: false },
+    { e: '🎂', name: 'birthday cake', shortcode: ':birthday:', cat: 'food', skin: false },
+    { e: '🍰', name: 'shortcake', shortcode: ':cake:', cat: 'food', skin: false },
+    { e: '🧁', name: 'cupcake', shortcode: ':cupcake:', cat: 'food', skin: false },
+    { e: '🍫', name: 'chocolate bar', shortcode: ':chocolate_bar:', cat: 'food', skin: false },
+    { e: '🍬', name: 'candy', shortcode: ':candy:', cat: 'food', skin: false },
+    { e: '🍭', name: 'lollipop', shortcode: ':lollipop:', cat: 'food', skin: false },
+    { e: '🍯', name: 'honey pot', shortcode: ':honey_pot:', cat: 'food', skin: false },
+    { e: '☕', name: 'hot beverage', shortcode: ':coffee:', cat: 'food', skin: false },
+    { e: '🍵', name: 'teacup', shortcode: ':tea:', cat: 'food', skin: false },
+    { e: '🍾', name: 'bottle with popping cork', shortcode: ':champagne:', cat: 'food', skin: false },
+    { e: '🍷', name: 'wine glass', shortcode: ':wine_glass:', cat: 'food', skin: false },
+    { e: '🍸', name: 'cocktail glass', shortcode: ':cocktail:', cat: 'food', skin: false },
+    { e: '🍹', name: 'tropical drink', shortcode: ':tropical_drink:', cat: 'food', skin: false },
+    { e: '🍺', name: 'beer mug', shortcode: ':beer:', cat: 'food', skin: false },
+    { e: '🍻', name: 'clinking beer mugs', shortcode: ':beers:', cat: 'food', skin: false },
+    { e: '🥤', name: 'cup with straw', shortcode: ':cup_with_straw:', cat: 'food', skin: false },
+    // --- Activities & Travel ---
+    { e: '⚽', name: 'soccer ball', shortcode: ':soccer:', cat: 'activities', skin: false },
+    { e: '🏀', name: 'basketball', shortcode: ':basketball:', cat: 'activities', skin: false },
+    { e: '🏈', name: 'american football', shortcode: ':football:', cat: 'activities', skin: false },
+    { e: '⚾', name: 'baseball', shortcode: ':baseball:', cat: 'activities', skin: false },
+    { e: '🎾', name: 'tennis', shortcode: ':tennis:', cat: 'activities', skin: false },
+    { e: '🏐', name: 'volleyball', shortcode: ':volleyball:', cat: 'activities', skin: false },
+    { e: '🎱', name: 'pool 8 ball', shortcode: ':8ball:', cat: 'activities', skin: false },
+    { e: '🏓', name: 'ping pong', shortcode: ':ping_pong:', cat: 'activities', skin: false },
+    { e: '🏸', name: 'badminton', shortcode: ':badminton:', cat: 'activities', skin: false },
+    { e: '🥊', name: 'boxing glove', shortcode: ':boxing_glove:', cat: 'activities', skin: false },
+    { e: '🥋', name: 'martial arts uniform', shortcode: ':martial_arts_uniform:', cat: 'activities', skin: false },
+    { e: '🎿', name: 'skis', shortcode: ':ski:', cat: 'activities', skin: false },
+    { e: '🎭', name: 'performing arts', shortcode: ':performing_arts:', cat: 'activities', skin: false },
+    { e: '🎨', name: 'artist palette', shortcode: ':art:', cat: 'activities', skin: false },
+    { e: '🎬', name: 'clapper board', shortcode: ':clapper:', cat: 'activities', skin: false },
+    { e: '🎤', name: 'microphone', shortcode: ':microphone:', cat: 'activities', skin: false },
+    { e: '🎧', name: 'headphone', shortcode: ':headphones:', cat: 'activities', skin: false },
+    { e: '🎮', name: 'video game', shortcode: ':video_game:', cat: 'activities', skin: false },
+    { e: '🕹️', name: 'joystick', shortcode: ':joystick:', cat: 'activities', skin: false },
+    { e: '🏆', name: 'trophy', shortcode: ':trophy:', cat: 'activities', skin: false },
+    { e: '🥇', name: 'gold medal', shortcode: ':first_place:', cat: 'activities', skin: false },
+    { e: '🥈', name: 'silver medal', shortcode: ':second_place:', cat: 'activities', skin: false },
+    { e: '🥉', name: 'bronze medal', shortcode: ':third_place:', cat: 'activities', skin: false },
+    { e: '🚗', name: 'automobile', shortcode: ':car:', cat: 'activities', skin: false },
+    { e: '🚕', name: 'taxi', shortcode: ':taxi:', cat: 'activities', skin: false },
+    { e: '🚙', name: 'sport utility vehicle', shortcode: ':blue_car:', cat: 'activities', skin: false },
+    { e: '🚌', name: 'bus', shortcode: ':bus:', cat: 'activities', skin: false },
+    { e: '🏎️', name: 'racing car', shortcode: ':racing_car:', cat: 'activities', skin: false },
+    { e: '🚓', name: 'police car', shortcode: ':police_car:', cat: 'activities', skin: false },
+    { e: '🚑', name: 'ambulance', shortcode: ':ambulance:', cat: 'activities', skin: false },
+    { e: '🚒', name: 'fire engine', shortcode: ':fire_engine:', cat: 'activities', skin: false },
+    { e: '🚲', name: 'bicycle', shortcode: ':bike:', cat: 'activities', skin: false },
+    { e: '🏍️', name: 'motorcycle', shortcode: ':motorcycle:', cat: 'activities', skin: false },
+    { e: '🚄', name: 'high speed train', shortcode: ':bullettrain_side:', cat: 'activities', skin: false },
+    { e: '✈️', name: 'airplane', shortcode: ':airplane:', cat: 'activities', skin: false },
+    { e: '🚀', name: 'rocket', shortcode: ':rocket:', cat: 'activities', skin: false },
+    { e: '🚁', name: 'helicopter', shortcode: ':helicopter:', cat: 'activities', skin: false },
+    { e: '⛵', name: 'sailboat', shortcode: ':sailboat:', cat: 'activities', skin: false },
+    { e: '🚢', name: 'ship', shortcode: ':ship:', cat: 'activities', skin: false },
+    { e: '🌋', name: 'volcano', shortcode: ':volcano:', cat: 'activities', skin: false },
+    { e: '🏖️', name: 'beach with umbrella', shortcode: ':beach:', cat: 'activities', skin: false },
+    { e: '🏝️', name: 'desert island', shortcode: ':island:', cat: 'activities', skin: false },
+    { e: '🗽', name: 'statue of liberty', shortcode: ':statue_of_liberty:', cat: 'activities', skin: false },
+    { e: '🗼', name: 'tokyo tower', shortcode: ':tokyo_tower:', cat: 'activities', skin: false },
+    // --- Objects & Symbols ---
+    { e: '💡', name: 'light bulb', shortcode: ':bulb:', cat: 'symbols', skin: false },
+    { e: '⌚', name: 'watch', shortcode: ':watch:', cat: 'symbols', skin: false },
+    { e: '📱', name: 'mobile phone', shortcode: ':iphone:', cat: 'symbols', skin: false },
+    { e: '💻', name: 'laptop', shortcode: ':computer:', cat: 'symbols', skin: false },
+    { e: '⌨️', name: 'keyboard', shortcode: ':keyboard:', cat: 'symbols', skin: false },
+    { e: '🖥️', name: 'desktop computer', shortcode: ':desktop:', cat: 'symbols', skin: false },
+    { e: '📷', name: 'camera', shortcode: ':camera:', cat: 'symbols', skin: false },
+    { e: '📹', name: 'video camera', shortcode: ':video_camera:', cat: 'symbols', skin: false },
+    { e: '🎥', name: 'movie camera', shortcode: ':movie_camera:', cat: 'symbols', skin: false },
+    { e: '📞', name: 'telephone receiver', shortcode: ':telephone_receiver:', cat: 'symbols', skin: false },
+    { e: '📺', name: 'television', shortcode: ':tv:', cat: 'symbols', skin: false },
+    { e: '📻', name: 'radio', shortcode: ':radio:', cat: 'symbols', skin: false },
+    { e: '⏰', name: 'alarm clock', shortcode: ':alarm_clock:', cat: 'symbols', skin: false },
+    { e: '🔑', name: 'key', shortcode: ':key:', cat: 'symbols', skin: false },
+    { e: '🔨', name: 'hammer', shortcode: ':hammer:', cat: 'symbols', skin: false },
+    { e: '🛠️', name: 'hammer and wrench', shortcode: ':tools:', cat: 'symbols', skin: false },
+    { e: '🔧', name: 'wrench', shortcode: ':wrench:', cat: 'symbols', skin: false },
+    { e: '🔩', name: 'nut and bolt', shortcode: ':nut_and_bolt:', cat: 'symbols', skin: false },
+    { e: '⚙️', name: 'gear', shortcode: ':gear:', cat: 'symbols', skin: false },
+    { e: '🔗', name: 'link', shortcode: ':link:', cat: 'symbols', skin: false },
+    { e: '💉', name: 'syringe', shortcode: ':syringe:', cat: 'symbols', skin: false },
+    { e: '💊', name: 'pill', shortcode: ':pill:', cat: 'symbols', skin: false },
+    { e: '🔮', name: 'crystal ball', shortcode: ':crystal_ball:', cat: 'symbols', skin: false },
+    { e: '✉️', name: 'envelope', shortcode: ':envelope:', cat: 'symbols', skin: false },
+    { e: '📦', name: 'package', shortcode: ':package:', cat: 'symbols', skin: false },
+    { e: '📜', name: 'scroll', shortcode: ':scroll:', cat: 'symbols', skin: false },
+    { e: '📄', name: 'page facing up', shortcode: ':page_facing_up:', cat: 'symbols', skin: false },
+    { e: '📚', name: 'books', shortcode: ':books:', cat: 'symbols', skin: false },
+    { e: '📓', name: 'notebook', shortcode: ':notebook:', cat: 'symbols', skin: false },
+    { e: '✏️', name: 'pencil', shortcode: ':pencil2:', cat: 'symbols', skin: false },
+    { e: '✅', name: 'check mark button', shortcode: ':white_check_mark:', cat: 'symbols', skin: false },
+    { e: '❌', name: 'cross mark', shortcode: ':x:', cat: 'symbols', skin: false },
+    { e: '⚠️', name: 'warning', shortcode: ':warning:', cat: 'symbols', skin: false },
+    { e: '🔔', name: 'bell', shortcode: ':bell:', cat: 'symbols', skin: false },
+    { e: '🔇', name: 'muted speaker', shortcode: ':mute:', cat: 'symbols', skin: false },
+    { e: '🔒', name: 'locked', shortcode: ':lock:', cat: 'symbols', skin: false },
+    { e: '🔓', name: 'unlocked', shortcode: ':unlock:', cat: 'symbols', skin: false },
+    { e: '🏳️', name: 'white flag', shortcode: ':white_flag:', cat: 'symbols', skin: false },
+    { e: '🏴', name: 'black flag', shortcode: ':black_flag:', cat: 'symbols', skin: false },
+    { e: '♻️', name: 'recycling symbol', shortcode: ':recycle:', cat: 'symbols', skin: false },
+    { e: '💬', name: 'speech balloon', shortcode: ':speech_balloon:', cat: 'symbols', skin: false },
+    { e: '💭', name: 'thought balloon', shortcode: ':thought_balloon:', cat: 'symbols', skin: false },
+    { e: '🔴', name: 'red circle', shortcode: ':red_circle:', cat: 'symbols', skin: false },
+    { e: '🟠', name: 'orange circle', shortcode: ':orange_circle:', cat: 'symbols', skin: false },
+    { e: '🟡', name: 'yellow circle', shortcode: ':yellow_circle:', cat: 'symbols', skin: false },
+    { e: '🟢', name: 'green circle', shortcode: ':green_circle:', cat: 'symbols', skin: false },
+    { e: '🔵', name: 'blue circle', shortcode: ':blue_circle:', cat: 'symbols', skin: false },
+    { e: '🟣', name: 'purple circle', shortcode: ':purple_circle:', cat: 'symbols', skin: false },
+    { e: '⬛', name: 'black large square', shortcode: ':black_large_square:', cat: 'symbols', skin: false },
+    { e: '⬜', name: 'white large square', shortcode: ':white_large_square:', cat: 'symbols', skin: false },
+  ];
+
+  // Skin tone Fitzpatrick modifiers
+  const SKIN_TONES = [
+    { mod: '', label: 'Default' },
+    { mod: '\u{1F3FB}', label: 'Light' },
+    { mod: '\u{1F3FC}', label: 'Medium-Light' },
+    { mod: '\u{1F3FD}', label: 'Medium' },
+    { mod: '\u{1F3FE}', label: 'Medium-Dark' },
+    { mod: '\u{1F3FF}', label: 'Dark' },
+  ];
+
+  // --- Helper: Get Unicode string for an emoji ---
+  function getEmojiUnicode(emoji) {
+    const codePoints = Array.from(emoji)
+      .map(cp => 'U+' + cp.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'))
+      .filter(cp => cp !== 'U+FE0F'); // filter variation selectors for cleanliness
+    return codePoints.join(' ');
+  }
+
+  // --- Helper: Get HTML entity for an emoji ---
+  function getEmojiHtmlEntity(emoji) {
+    return Array.from(emoji)
+      .map(cp => '&#' + cp.codePointAt(0) + ';')
+      .join('');
+  }
+
+  // --- Helper: Apply skin tone to an emoji ---
+  function applySkintone(baseEmoji, toneMod) {
+    if (!toneMod) return baseEmoji;
+    // Remove any existing skin tone modifier, then add new one
+    const cleaned = baseEmoji.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, '');
+    // Insert modifier after the first code point
+    const chars = Array.from(cleaned);
+    if (chars.length === 0) return baseEmoji;
+    return chars[0] + toneMod + chars.slice(1).join('');
+  }
+
+  // --- DOM References ---
+  const epGrid = document.getElementById('epGrid');
+  const epEmptyState = document.getElementById('epEmptyState');
+  const epSearchInput = document.getElementById('epSearchInput');
+  const epSearchClear = document.getElementById('epSearchClear');
+  const epCategoryBar = document.getElementById('epCategoryBar');
+  const epDetailPanel = document.getElementById('epDetailPanel');
+  const epDetailClose = document.getElementById('epDetailClose');
+  const epDetailEmoji = document.getElementById('epDetailEmoji');
+  const epDetailName = document.getElementById('epDetailName');
+  const epDetailUnicode = document.getElementById('epDetailUnicode');
+  const epDetailHtml = document.getElementById('epDetailHtml');
+  const epDetailShortcode = document.getElementById('epDetailShortcode');
+  const epSkinToneBar = document.getElementById('epSkinToneBar');
+  const epSkinToneOptions = document.getElementById('epSkinToneOptions');
+  const epSkinPopover = document.getElementById('epSkinPopover');
+  const epCopiedToast = document.getElementById('epCopiedToast');
+
+  if (!epGrid || !epSearchInput || !epCategoryBar) return; // Guard
+
+  let epActiveCategory = 'smileys';
+  let epSearchQuery = '';
+  let epToastTimer = null;
+  let epCurrentDetailEmoji = null; // Track currently shown detail emoji data
+  let epLongPressTimer = null;
+
+  // --- localStorage helpers ---
+  function epGetRecent() {
+    try { return JSON.parse(localStorage.getItem('ep_recent') || '[]'); } catch { return []; }
+  }
+  function epSetRecent(arr) {
+    localStorage.setItem('ep_recent', JSON.stringify(arr.slice(0, 20)));
+  }
+  function epAddRecent(emoji) {
+    let recent = epGetRecent().filter(e => e !== emoji);
+    recent.unshift(emoji);
+    epSetRecent(recent);
+  }
+  function epGetFavorites() {
+    try { return JSON.parse(localStorage.getItem('ep_favorites') || '[]'); } catch { return []; }
+  }
+  function epSetFavorites(arr) {
+    localStorage.setItem('ep_favorites', JSON.stringify(arr));
+  }
+  function epToggleFavorite(emoji) {
+    let favs = epGetFavorites();
+    if (favs.includes(emoji)) {
+      favs = favs.filter(e => e !== emoji);
+    } else {
+      favs.push(emoji);
+    }
+    epSetFavorites(favs);
+    return favs.includes(emoji);
+  }
+
+  // --- Copy to clipboard ---
+  function epCopyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        epFallbackCopy(text);
+      });
+    } else {
+      epFallbackCopy(text);
+    }
+  }
+
+  function epFallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  // --- Show toast ---
+  function epShowToast(msg) {
+    if (!epCopiedToast) return;
+    clearTimeout(epToastTimer);
+    epCopiedToast.textContent = msg || '✅ Copied!';
+    epCopiedToast.classList.add('show');
+    epToastTimer = setTimeout(() => {
+      epCopiedToast.classList.remove('show');
+    }, 1800);
+  }
+
+  // --- Render emoji grid ---
+  function epRenderGrid() {
+    epGrid.innerHTML = '';
+    epEmptyState.style.display = 'none';
+    epSkinPopover.style.display = 'none';
+
+    let emojis = [];
+    const favorites = epGetFavorites();
+
+    if (epSearchQuery) {
+      // Search across all categories
+      const q = epSearchQuery.toLowerCase();
+      emojis = EP_EMOJI_DATA.filter(d =>
+        d.name.toLowerCase().includes(q) ||
+        d.shortcode.toLowerCase().includes(q) ||
+        d.e === q
+      );
+    } else if (epActiveCategory === 'recent') {
+      const recent = epGetRecent();
+      emojis = recent.map(e => EP_EMOJI_DATA.find(d => d.e === e)).filter(Boolean);
+    } else if (epActiveCategory === 'favorites') {
+      emojis = favorites.map(e => EP_EMOJI_DATA.find(d => d.e === e)).filter(Boolean);
+    } else {
+      emojis = EP_EMOJI_DATA.filter(d => d.cat === epActiveCategory);
+    }
+
+    if (emojis.length === 0) {
+      epEmptyState.style.display = 'block';
+      if (epActiveCategory === 'recent') {
+        epEmptyState.querySelector('.ep-empty-emoji').textContent = '🕐';
+        epEmptyState.querySelector('p').textContent = 'No recently copied emojis yet. Click any emoji to copy it!';
+      } else if (epActiveCategory === 'favorites') {
+        epEmptyState.querySelector('.ep-empty-emoji').textContent = '⭐';
+        epEmptyState.querySelector('p').textContent = 'No favorites yet. Right-click or long-press any emoji to favorite it!';
+      } else {
+        epEmptyState.querySelector('.ep-empty-emoji').textContent = '🔍';
+        epEmptyState.querySelector('p').textContent = 'No emojis found. Try a different search term.';
+      }
+      return;
+    }
+
+    emojis.forEach(data => {
+      const btn = document.createElement('button');
+      btn.className = 'ep-grid-btn';
+      btn.textContent = data.e;
+      btn.title = data.name;
+
+      // Show fav indicator
+      if (favorites.includes(data.e)) {
+        const star = document.createElement('span');
+        star.className = 'ep-fav-indicator';
+        star.textContent = '⭐';
+        btn.appendChild(star);
+      }
+
+      // Click = copy emoji
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        epCopyToClipboard(data.e);
+        epAddRecent(data.e);
+        epShowToast(`✅ ${data.e} Copied!`);
+        epShowDetail(data);
+      });
+
+      // Right-click = toggle favorite
+      btn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const isFav = epToggleFavorite(data.e);
+        epShowToast(isFav ? `⭐ Added to favorites` : `Removed from favorites`);
+        epRenderGrid();
+      });
+
+      // Long-press for skin tones (mobile) or skin tone popover
+      if (data.skin) {
+        let pressTimer = null;
+        btn.addEventListener('pointerdown', (e) => {
+          pressTimer = setTimeout(() => {
+            e.preventDefault();
+            epShowSkinPopover(data, btn);
+          }, 500);
+        });
+        btn.addEventListener('pointerup', () => clearTimeout(pressTimer));
+        btn.addEventListener('pointerleave', () => clearTimeout(pressTimer));
+      }
+
+      epGrid.appendChild(btn);
+    });
+  }
+
+  // --- Show detail panel ---
+  function epShowDetail(data) {
+    epCurrentDetailEmoji = data;
+    epDetailPanel.style.display = 'block';
+    epDetailEmoji.textContent = data.e;
+    epDetailName.textContent = data.name;
+    epDetailUnicode.textContent = getEmojiUnicode(data.e);
+    epDetailHtml.textContent = getEmojiHtmlEntity(data.e);
+    epDetailShortcode.textContent = data.shortcode;
+
+    // Skin tones
+    if (data.skin) {
+      epSkinToneBar.style.display = 'block';
+      epSkinToneOptions.innerHTML = '';
+      SKIN_TONES.forEach(tone => {
+        const skinBtn = document.createElement('button');
+        skinBtn.className = 'ep-skin-tone-btn';
+        const toned = applySkintone(data.e, tone.mod);
+        skinBtn.textContent = toned;
+        skinBtn.title = tone.label;
+        skinBtn.addEventListener('click', () => {
+          epCopyToClipboard(toned);
+          epAddRecent(data.e);
+          epShowToast(`✅ ${toned} Copied!`);
+          // Update detail display
+          epDetailEmoji.textContent = toned;
+          epDetailUnicode.textContent = getEmojiUnicode(toned);
+          epDetailHtml.textContent = getEmojiHtmlEntity(toned);
+          // Highlight active
+          epSkinToneOptions.querySelectorAll('.ep-skin-tone-btn').forEach(b => b.classList.remove('active'));
+          skinBtn.classList.add('active');
+        });
+        epSkinToneOptions.appendChild(skinBtn);
+      });
+    } else {
+      epSkinToneBar.style.display = 'none';
+    }
+
+    // Smooth scroll to detail
+    epDetailPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // --- Close detail panel ---
+  if (epDetailClose) {
+    epDetailClose.addEventListener('click', () => {
+      epDetailPanel.style.display = 'none';
+      epCurrentDetailEmoji = null;
+    });
+  }
+
+  // --- Detail panel copy buttons ---
+  document.querySelectorAll('.ep-detail-copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-copy-target');
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        epCopyToClipboard(targetEl.textContent);
+        epShowToast('✅ Copied!');
+      }
+    });
+  });
+
+  // --- Skin tone popover in grid ---
+  function epShowSkinPopover(data, anchorBtn) {
+    epSkinPopover.innerHTML = '';
+    epSkinPopover.style.display = 'flex';
+
+    SKIN_TONES.forEach(tone => {
+      const btn = document.createElement('button');
+      btn.className = 'ep-skin-pop-btn';
+      const toned = applySkintone(data.e, tone.mod);
+      btn.textContent = toned;
+      btn.title = tone.label;
+      btn.addEventListener('click', () => {
+        epCopyToClipboard(toned);
+        epAddRecent(data.e);
+        epShowToast(`✅ ${toned} Copied!`);
+        epSkinPopover.style.display = 'none';
+      });
+      epSkinPopover.appendChild(btn);
+    });
+
+    // Position popover above the anchor button
+    const rect = anchorBtn.getBoundingClientRect();
+    const popW = 6 * 44 + 5 * 4 + 16; // approx width
+    let left = rect.left + rect.width / 2 - popW / 2;
+    if (left < 8) left = 8;
+    if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+    epSkinPopover.style.left = left + 'px';
+    epSkinPopover.style.top = (rect.top - 56) + 'px';
+  }
+
+  // Close popover on outside click
+  document.addEventListener('click', (e) => {
+    if (epSkinPopover.style.display !== 'none' && !epSkinPopover.contains(e.target)) {
+      epSkinPopover.style.display = 'none';
+    }
+  });
+
+  // --- Category tab switching ---
+  epCategoryBar.addEventListener('click', (e) => {
+    const tab = e.target.closest('.ep-cat-tab');
+    if (!tab) return;
+    epCategoryBar.querySelectorAll('.ep-cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    epActiveCategory = tab.getAttribute('data-category');
+    epSearchQuery = '';
+    epSearchInput.value = '';
+    epSearchClear.style.display = 'none';
+    epDetailPanel.style.display = 'none';
+    epRenderGrid();
+  });
+
+  // --- Search input ---
+  epSearchInput.addEventListener('input', () => {
+    epSearchQuery = epSearchInput.value.trim();
+    epSearchClear.style.display = epSearchQuery ? 'flex' : 'none';
+    if (epSearchQuery) {
+      // Deselect category tabs during search
+      epCategoryBar.querySelectorAll('.ep-cat-tab').forEach(t => t.classList.remove('active'));
+    }
+    epRenderGrid();
+  });
+
+  epSearchClear.addEventListener('click', () => {
+    epSearchInput.value = '';
+    epSearchQuery = '';
+    epSearchClear.style.display = 'none';
+    // Re-activate the smileys tab
+    epCategoryBar.querySelectorAll('.ep-cat-tab').forEach(t => t.classList.remove('active'));
+    epCategoryBar.querySelector('[data-category="smileys"]').classList.add('active');
+    epActiveCategory = 'smileys';
+    epRenderGrid();
+    epSearchInput.focus();
+  });
+
+  // --- Initial render ---
+  epRenderGrid();
 
 });

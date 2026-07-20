@@ -3,24 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Download iEmoji Keyboard APK for Android. Get the complete iOS-style keyboard experience with iPhone emojis, customized themes, fast typing, no ads, and 100% privacy protection. Free download.">
-  <meta name="keywords" content="iPhone emojis on Android, iOS keyboard APK, iOS emoji keyboard, free android keyboard, no ads keyboard, safe keyboard apk, download iemoji keyboard">
+  <meta name="description" content="Copy and paste iOS-style emojis instantly. Browse by category, search by name, view Unicode & shortcodes, pick skin tones — all in one fast, ad-free tool. Also download the iEmoji Keyboard APK for Android.">
+  <meta name="keywords" content="emoji copy paste, iOS emojis online, copy iPhone emojis, emoji keyboard online, emoji search, emoji Unicode, emoji shortcodes, iPhone emojis on Android, iOS keyboard APK, iOS emoji keyboard, free android keyboard, download iemoji keyboard">
   <meta name="author" content="iEmoji Team">
   <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://daksh-2102.github.io/IEmoji/">
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://iemojikeyboard.com/">
-  <meta property="og:title" content="iEmoji Keyboard - iPhone Emojis on Android for Free">
-  <meta property="og:description" content="Experience the premium iOS-style keyboard and iPhone emojis on your Android device. Fast, private, customizable, and 100% ad-free.">
+  <meta property="og:url" content="https://daksh-2102.github.io/IEmoji/">
+  <meta property="og:title" content="iEmoji — Copy iOS Emojis Instantly | Free Emoji Keyboard for Android">
+  <meta property="og:description" content="Browse, search, and copy iOS-style emojis in one click. View Unicode, shortcodes, and skin tone variants. Also download the free iEmoji Keyboard APK for Android.">
   <meta property="og:image" content="assets/og-image.jpg">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:title" content="iEmoji Keyboard - iPhone Emojis on Android for Free">
-  <meta property="twitter:description" content="Experience the premium iOS-style keyboard and iPhone emojis on your Android device. Fast, private, customizable, and 100% ad-free.">
+  <meta property="twitter:title" content="iEmoji — Copy iOS Emojis Instantly | Free Emoji Keyboard for Android">
+  <meta property="twitter:description" content="Browse, search, and copy iOS-style emojis in one click. View Unicode, shortcodes, and skin tone variants. Also download the free iEmoji Keyboard APK for Android.">
 
-  <title>iEmoji Keyboard - Get iPhone Emojis on Android for Free</title>
+  <title>iEmoji — Copy & Paste iOS Emojis | Free Emoji Keyboard for Android</title>
 
   <!-- Google Fonts - Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,6 +79,25 @@
     ]
   }
   </script>
+
+  <!-- Schema.org WebApplication Markup -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "iEmoji — Emoji Copy & Paste Tool",
+    "url": "https://daksh-2102.github.io/IEmoji/",
+    "description": "Browse, search, and copy iOS-style emojis instantly. View Unicode code points, HTML entities, and shortcodes. Pick skin tone variants for human emojis.",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "browserRequirements": "Requires a modern web browser with JavaScript enabled"
+  }
+  </script>
 </head>
 <body>
 
@@ -102,6 +122,7 @@
       </a>
 
       <nav class="nav-menu">
+        <a href="#emoji-picker" class="nav-link">Emojis</a>
         <a href="#features" class="nav-link">Features</a>
         <a href="#demo" class="nav-link">Try Demo</a>
         <a href="#reviews" class="nav-link">Reviews</a>
@@ -268,6 +289,93 @@
 
       </div>
     </section>
+
+    <!-- Emoji Copy-Paste Picker Section -->
+    <section class="emoji-picker-section" id="emoji-picker">
+      <div class="section-container">
+        <div class="section-header text-center">
+          <span class="section-subtitle">Emoji Library</span>
+          <h2 class="section-title">Find & Copy Any Emoji <span class="text-accent">Instantly</span></h2>
+          <p class="section-description">Click any emoji to copy it to your clipboard. Search by name, browse categories, view Unicode details, and pick skin tones.</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="ep-search-wrapper">
+          <svg class="ep-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="epSearchInput" class="ep-search-input" placeholder="Search emojis by name, e.g. &quot;smile&quot;, &quot;heart&quot;, &quot;fire&quot;..." autocomplete="off">
+          <button class="ep-search-clear" id="epSearchClear" aria-label="Clear search" style="display:none;">&times;</button>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="ep-category-bar" id="epCategoryBar">
+          <button class="ep-cat-tab" data-category="recent" title="Recently Used">🕐</button>
+          <button class="ep-cat-tab" data-category="favorites" title="Favorites">⭐</button>
+          <button class="ep-cat-tab active" data-category="smileys" title="Smileys & People">😀</button>
+          <button class="ep-cat-tab" data-category="animals" title="Animals & Nature">🐱</button>
+          <button class="ep-cat-tab" data-category="food" title="Food & Drink">🍔</button>
+          <button class="ep-cat-tab" data-category="activities" title="Activities & Travel">⚽</button>
+          <button class="ep-cat-tab" data-category="symbols" title="Objects & Symbols">💡</button>
+        </div>
+
+        <!-- Emoji Grid -->
+        <div class="ep-grid-container">
+          <div class="ep-grid" id="epGrid">
+            <!-- Populated by JS -->
+          </div>
+          <div class="ep-empty-state" id="epEmptyState" style="display:none;">
+            <span class="ep-empty-emoji">🔍</span>
+            <p>No emojis found. Try a different search term.</p>
+          </div>
+        </div>
+
+        <!-- Emoji Detail Panel -->
+        <div class="ep-detail-panel" id="epDetailPanel" style="display:none;">
+          <button class="ep-detail-close" id="epDetailClose" aria-label="Close detail panel">&times;</button>
+          <div class="ep-detail-emoji" id="epDetailEmoji"></div>
+          <h3 class="ep-detail-name" id="epDetailName"></h3>
+          <div class="ep-detail-row">
+            <span class="ep-detail-label">Unicode</span>
+            <code class="ep-detail-value" id="epDetailUnicode"></code>
+            <button class="ep-detail-copy-btn" data-copy-target="epDetailUnicode" title="Copy Unicode">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </button>
+          </div>
+          <div class="ep-detail-row">
+            <span class="ep-detail-label">HTML</span>
+            <code class="ep-detail-value" id="epDetailHtml"></code>
+            <button class="ep-detail-copy-btn" data-copy-target="epDetailHtml" title="Copy HTML entity">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </button>
+          </div>
+          <div class="ep-detail-row">
+            <span class="ep-detail-label">Shortcode</span>
+            <code class="ep-detail-value" id="epDetailShortcode"></code>
+            <button class="ep-detail-copy-btn" data-copy-target="epDetailShortcode" title="Copy shortcode">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </button>
+          </div>
+          <!-- Skin Tone Picker (shown only for applicable emojis) -->
+          <div class="ep-skin-tone-bar" id="epSkinToneBar" style="display:none;">
+            <span class="ep-detail-label">Skin Tone</span>
+            <div class="ep-skin-tone-options" id="epSkinToneOptions">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Skin Tone Popover (positioned above emoji in grid) -->
+        <div class="ep-skin-popover" id="epSkinPopover" style="display:none;">
+          <!-- Populated by JS -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Copied Toast -->
+    <div class="ep-copied-toast" id="epCopiedToast">✅ Copied!</div>
 
     <!-- Features Section -->
     <section class="features-section" id="features">

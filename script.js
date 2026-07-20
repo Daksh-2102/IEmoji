@@ -492,11 +492,20 @@ document.addEventListener("DOMContentLoaded", () => {
           inputArea.textContent = charArray.join("");
         }
         updatePlaceholder();
+        if (window.AndroidKeyboard && window.AndroidKeyboard.deleteChar) {
+          window.AndroidKeyboard.deleteChar();
+        }
       } else if (key === 'space') {
         inputArea.textContent += " ";
         updatePlaceholder();
+        if (window.AndroidKeyboard && window.AndroidKeyboard.typeText) {
+          window.AndroidKeyboard.typeText(" ");
+        }
       } else if (key === 'return') {
         sendMessage();
+        if (window.AndroidKeyboard && window.AndroidKeyboard.sendEnter) {
+          window.AndroidKeyboard.sendEnter();
+        }
       } else if (key === '123' || key === '#+=') {
         currentState = KEYBOARD_STATES.NUMERIC;
         renderKeyboard();
@@ -513,6 +522,10 @@ document.addEventListener("DOMContentLoaded", () => {
           textToAdd = key.toUpperCase();
         }
         inputArea.textContent += textToAdd;
+        
+        if (window.AndroidKeyboard && window.AndroidKeyboard.typeText) {
+          window.AndroidKeyboard.typeText(textToAdd);
+        }
         
         // Auto lowercase after typing one character in uppercase
         if (currentState === KEYBOARD_STATES.ALPHA_UPPER) {

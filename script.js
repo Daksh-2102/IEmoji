@@ -1039,6 +1039,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const isDark = document.body.classList.contains("dark-theme");
       siteThemeToggle.textContent = isDark ? "☀️" : "🌙";
       localStorage.setItem("siteTheme", isDark ? "dark" : "light");
+    });
   }
 
   // --- Copy SHA-256 Checksum Listener ---

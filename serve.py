@@ -1,7 +1,8 @@
 import http.server
 import socketserver
+import os
 
-PORT = 8080
+PORT = int(os.environ.get("PORT", 8080))
 
 class APKHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -21,9 +22,10 @@ class APKHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         print(f"[Request] {self.address_string()} - {format % args}")
 
-print(f"Serving iEmoji Keyboard at http://0.0.0.0:{PORT}")
-print(f"Access from phone at: http://10.119.141.112:{PORT}")
-print(f"Press Ctrl+C to stop the server.\n")
+if __name__ == '__main__':
+    print(f"Serving iEmoji Keyboard at http://0.0.0.0:{PORT}")
+    print(f"Access from phone at: http://10.119.141.112:{PORT}")
+    print(f"Press Ctrl+C to stop the server.\n")
 
-with socketserver.TCPServer(("", PORT), APKHandler) as httpd:
-    httpd.serve_forever()
+    with socketserver.TCPServer(("", PORT), APKHandler) as httpd:
+        httpd.serve_forever()

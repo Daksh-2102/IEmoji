@@ -988,7 +988,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Programmatic direct download trigger for mobile browsers
       try {
         const link = document.createElement("a");
-        link.href = "./iemoji-keyboard.apk";
+        link.href = "https://iemoji-keyboard.onrender.com/iemoji-keyboard.apk";
         link.download = "iemoji-keyboard.apk";
         document.body.appendChild(link);
         link.click();

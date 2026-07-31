@@ -47,6 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const user = localStorage.getItem('userData');
   const loginForm = document.getElementById('loginForm');
   const cardContent = document.querySelector('.login-card');
+  const nextRedirect = new URLSearchParams(window.location.search).get('next') || 'index.html';
+  const safeRedirect = nextRedirect.includes('login.html') ? 'index.html' : nextRedirect;
 
   if (token && user) {
     // User is already logged in, show logged in card with option to logout
@@ -63,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     document.getElementById('goToHomeBtn').addEventListener('click', () => {
-      window.location.href = 'index.html';
+      window.location.href = safeRedirect;
     });
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -79,6 +81,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return str.replace(/[&<>'"]/g, 
       tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
+  }
+
+  function redirectToNextPage() {
+    window.location.href = safeRedirect;
+  }
+
+  function performSocialLogin(provider) {
+    const providerEmail = provider === 'Google' ? 'google.user@example.com' : 'sso.user@example.com';
+    const mockAuthResponse = {
+      token: `mock-${provider.toLowerCase()}-session-${Date.now()}`,
+      user: {
+        email: providerEmail,
+        name: `${provider} User`,
+        provider,
+        role: 'user'
+      }
+    };
+
+    localStorage.setItem('authToken', mockAuthResponse.token);
+    localStorage.setItem('userData', JSON.stringify(mockAuthResponse.user));
+    redirectToNextPage();
   }
 
   // --- Login Form Validation and Handler ---
@@ -168,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Mock auth response payload
         const mockAuthResponse = {
-          token: 'mock-session-jwt-token-abcdef123456',
+          token: `mock-session-jwt-token-${Date.now()}`,
           user: {
             email: emailValue,
             name: emailValue.split('@')[0],
@@ -180,8 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('authToken', mockAuthResponse.token);
         localStorage.setItem('userData', JSON.stringify(mockAuthResponse.user));
 
-        // Redirect to homepage
-        window.location.href = 'index.html';
+        // Redirect to requested page or homepage
+        redirectToNextPage();
 
       } catch (err) {
         // Display validation/network error summary
@@ -194,5 +217,16 @@ document.addEventListener('DOMContentLoaded', () => {
         passwordInput.disabled = false;
       }
     });
+
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
+    const ssoSignInBtn = document.getElementById('ssoSignInBtn');
+
+    if (googleSignInBtn) {
+      googleSignInBtn.addEventListener('click', () => performSocialLogin('Google'));
+    }
+
+    if (ssoSignInBtn) {
+      ssoSignInBtn.addEventListener('click', () => performSocialLogin('SSO'));
+    }
   }
 });
